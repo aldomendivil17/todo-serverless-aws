@@ -1,0 +1,15 @@
+# Frontend
+frontend/node_modules
+frontend/dist
+
+# Backend
+backend/venv
+backend/package
+backend/function.zip
+
+# Python
+__pycache__
+*.pyc
+
+# OS
+.DS_Store
