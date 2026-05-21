@@ -1,0 +1,47 @@
+name: Deploy Backend
+
+on:
+  push:
+    paths:
+      - "backend/**"
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt -t backend/package
+
+      - name: Copy files
+        run: |
+          cp backend/main.py backend/package/
+
+      - name: Create zip
+        run: |
+          cd backend/package
+          zip -r ../function.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name todo-api \
+            --zip-file fileb://backend/function.zip
