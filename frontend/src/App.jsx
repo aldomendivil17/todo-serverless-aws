@@ -74,7 +74,7 @@ export default function App() {
   return (
     <div style={{ padding: 20 }}>
 
-      <h1>ToDo App</h1>
+      <h1>ToDo Serverless Application on AWS</h1>
 
       <input
         value={title}
