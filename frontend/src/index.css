@@ -15,3 +15,17 @@ body {
   font-family: Arial, sans-serif;
   background: #f3f4f6;
 }
+
+.sidebar-link {
+  display: block;
+  width: 100%;
+  color: white;
+  text-decoration: none;
+  padding: 15px;
+  box-sizing: border-box;
+  transition: background 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: #1c46b9;
+}
