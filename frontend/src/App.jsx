@@ -1,23 +1,30 @@
 import { useEffect, useState } from "react";
 
-const API = "https://gugrqaeu4cz6gl7yxuztxcqphy0gcwck.lambda-url.us-east-1.on.aws/";
+import Layout from "./components/layout/Layout";
+import TaskForm from "./components/tasks/TaskForm";
+import TaskList from "./components/tasks/TaskList";
+import EditTaskModal from "./components/modals/EditTaskModal";
+import DeleteTaskModal from "./components/modals/DeleteTaskModal";
+
+const API =
+  "https://gugrqaeu4cz6gl7yxuztxcqphy0gcwck.lambda-url.us-east-1.on.aws/";
 
 export default function App() {
-
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   async function loadTasks() {
-
     const res = await fetch(`${API}/tasks`);
-
     const data = await res.json();
-
     setTasks(data);
   }
 
   async function addTask() {
-
     if (!title) return;
 
     await fetch(`${API}/tasks`, {
@@ -25,44 +32,52 @@ export default function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        title,
-      }),
+      body: JSON.stringify({ title }),
     });
 
     setTitle("");
-
     loadTasks();
   }
 
-  async function deleteTask(id) {
+  function deleteTask(task) {
+    setTaskToDelete(task);
+    setIsDeleteModalOpen(true);
+  }
 
-    await fetch(`${API}/tasks/${id}`, {
+  async function confirmDelete() {
+    await fetch(`${API}/tasks/${taskToDelete.id}`, {
       method: "DELETE",
     });
 
+    setIsDeleteModalOpen(false);
+    setTaskToDelete(null);
+
     loadTasks();
   }
 
-  async function editTask(task) {
+  function editTask(task) {
+    setSelectedTask(task);
+    setEditTitle(task.title);
+    setIsModalOpen(true);
+  }
 
-    const newTitle = prompt(
-      "Editar tarea:",
-      task.title
-    );
+  async function saveTaskEdit() {
+    if (!editTitle) return;
 
-    if (!newTitle) return;
-
-    await fetch(`${API}/tasks/${task.id}`, {
+    await fetch(`${API}/tasks/${selectedTask.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        title: newTitle,
-        done: task.done
+        title: editTitle,
+        done: selectedTask.done,
       }),
     });
+
+    setIsModalOpen(false);
+    setSelectedTask(null);
+    setEditTitle("");
 
     loadTasks();
   }
@@ -72,53 +87,26 @@ export default function App() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
+    <>
+      <Layout>
+        <TaskForm title={title} setTitle={setTitle} addTask={addTask} />
 
-      <h1>ToDo Serverless Application on AWS</h1>
+        <TaskList tasks={tasks} editTask={editTask} deleteTask={deleteTask} />
+      </Layout>
 
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Nueva tarea"
+      <EditTaskModal
+        isOpen={isModalOpen}
+        editTitle={editTitle}
+        setEditTitle={setEditTitle}
+        saveTaskEdit={saveTaskEdit}
+        closeModal={() => setIsModalOpen(false)}
       />
 
-      <button onClick={addTask}>
-        Agregar
-      </button>
-
-      <hr />
-
-      {tasks.map((task) => (
-        <div
-          key={task.id}
-          style={{
-            marginBottom: 10
-          }}
-        >
-
-          {task.title}
-
-          <button
-            onClick={() => editTask(task)}
-            style={{
-              marginLeft: 10
-            }}
-          >
-            Editar
-          </button>
-
-          <button
-            onClick={() => deleteTask(task.id)}
-            style={{
-              marginLeft: 10
-            }}
-          >
-            Eliminar
-          </button>
-
-        </div>
-      ))}
-
-    </div>
+      <DeleteTaskModal
+        isOpen={isDeleteModalOpen}
+        confirmDelete={confirmDelete}
+        closeModal={() => setIsDeleteModalOpen(false)}
+      />
+    </>
   );
 }
